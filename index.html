@@ -160,6 +160,35 @@ tr:hover{background:#f5f9f5}
 .prod-card .specs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .prod-card .sp{background:#fff;border:1px solid var(--rule);border-radius:6px;padding:2px 8px;font-size:10.5px}
 
+/* AI Chat */
+.ai-chat{display:flex;flex-direction:column;height:calc(100vh - 260px);min-height:380px}
+.ai-msgs{flex:1;overflow-y:auto;padding:4px 0;display:flex;flex-direction:column;gap:10px}
+.ai-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.6;word-break:break-word}
+.ai-msg.user{align-self:flex-end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.ai-msg.bot{align-self:flex-start;background:#fff;border:1px solid var(--rule);border-bottom-left-radius:4px}
+.ai-msg.bot .think{font-size:11px;color:var(--muted);margin-bottom:6px;padding:6px 8px;background:#f8faf8;border-radius:6px;border-left:3px solid var(--accent3);max-height:120px;overflow-y:auto;display:none}
+.ai-msg.bot .think.show{display:block}
+.ai-msg.bot .think-tag{font-size:10px;color:var(--accent3);cursor:pointer;user-select:none;margin-bottom:4px;display:inline-block}
+.ai-msg .time{font-size:9px;opacity:.6;margin-top:3px;text-align:right}
+.ai-input-wrap{display:flex;gap:8px;padding:10px 0;background:var(--bg);position:sticky;bottom:0}
+.ai-input{flex:1;padding:10px 14px;border:1.5px solid var(--rule);border-radius:22px;font-size:14px;font-family:inherit;outline:none;background:#fff}
+.ai-input:focus{border-color:var(--accent)}
+.ai-send{width:40px;height:40px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ai-send:active{background:var(--accent-dark)}
+.ai-send:disabled{opacity:.5}
+.ai-typing{padding:10px 14px;align-self:flex-start;display:none}
+.ai-typing .ld{display:inline-flex;gap:4px}
+.ai-typing .ld span{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bn 1.4s ease-in-out infinite}
+.ai-typing .ld span:nth-child(2){animation-delay:.2s}.ai-typing .ld span:nth-child(3){animation-delay:.4s}
+.ai-welcome{text-align:center;color:var(--muted);padding:40px 20px;font-size:14px;line-height:2}
+.ai-welcome .big{font-size:40px;display:block;margin-bottom:10px}
+.ai-suggest{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px}
+.ai-suggest .sg{background:#fff;border:1px solid var(--rule);border-radius:16px;padding:6px 12px;font-size:12px;color:var(--accent);cursor:pointer;white-space:nowrap}
+.ai-suggest .sg:active{background:var(--accent);color:#fff}
+.ai-key-bar{display:flex;gap:6px;align-items:center;margin-bottom:6px;padding:8px 10px;background:#fff3e0;border-radius:8px;font-size:11px;color:#e65100;display:none}
+.ai-key-bar input{flex:1;padding:4px 8px;border:1px solid #ffe0b2;border-radius:4px;font-size:12px;font-family:monospace}
+.ai-key-bar button{background:#e65100;color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer}
+
 /* Hide on mobile */
 @media(min-width:768px){
   .bottom-nav{display:none}
@@ -186,6 +215,7 @@ tr:hover{background:#f5f9f5}
       <div class="nav-tab" data-tab="weather">🌤️ 天气农事</div>
       <div class="nav-tab" data-tab="fert">🧪 施肥计算</div>
       <div class="nav-tab" data-tab="prod">🛒 产品</div>
+      <div class="nav-tab" data-tab="ai">🤖 AI咨询</div>
     </div>
   </div>
 </div>
@@ -590,12 +620,56 @@ tr:hover{background:#f5f9f5}
       </div>
     </div>
     <div class="prod-card">
-      <h4>🧪 香满乐专用配方肥</h4>
+      <h4">🧪 香满乐专用配方肥</h4>
       <p>根据测土配方结果定制，实现「一田一策」精准施肥。</p>
       <div class="specs">
         <span class="sp">可定制配方</span>
         <span class="sp">按作物定制</span>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Consultation Section -->
+<div class="section" id="sec-ai">
+  <div class="container">
+    <div class="sec-title">🤖 AI 农技咨询 <span class="sub">DeepSeek 驱动</span></div>
+    <div class="ai-key-bar" id="aiKeyBar">
+      <span>🔑 API Key：</span>
+      <input type="password" id="aiKeyInput" placeholder="输入 DeepSeek API Key">
+      <button onclick="saveKey()">保存</button>
+      <button onclick="hideKeyBar()" style="background:transparent;color:#e65100;border:none;font-size:16px;cursor:pointer">✕</button>
+    </div>
+    <div class="card" style="padding:12px">
+      <div class="ai-chat">
+        <div class="ai-msgs" id="aiMsgs">
+          <div class="ai-welcome" id="aiWelcome">
+            <span class="big">🤖</span>
+            <strong>你好！我是黔南农科 AI 助手</strong><br>
+            由 <strong>DeepSeek</strong> 驱动，可以帮你解答：<br>
+            施肥方案、病虫害识别、土壤改良、<br>
+            中药材种植、果树管理、招标信息……
+            <div class="ai-suggest">
+              <span class="sg" onclick="askSuggestion(this)">玉米怎么施肥产量高？</span>
+              <span class="sg" onclick="askSuggestion(this)">贵州黄壤如何改良？</span>
+              <span class="sg" onclick="askSuggestion(this)">辣椒病虫害防治</span>
+              <span class="sg" onclick="askSuggestion(this)">有机肥和菌剂怎么搭配？</span>
+            </div>
+          </div>
+          <div class="ai-typing" id="aiTyping">
+            <div class="ld"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+        <div class="ai-input-wrap">
+          <input class="ai-input" id="aiInput" placeholder="输入你的农业问题……" onkeydown="if(event.key==='Enter')sendMsg()">
+          <button class="ai-send" id="aiSendBtn" onclick="sendMsg()">➤</button>
+        </div>
+      </div>
+    </div>
+    <div class="src-note" style="margin-top:10px">
+      <span class="dot ref"></span>
+      AI 回答仅供参考，具体农事操作请结合当地实际情况。首次使用请点击上方橙色条输入 DeepSeek API Key。
+      <a href="https://platform.deepseek.com/api_keys" target="_blank" style="margin-left:auto">获取 Key →</a>
     </div>
   </div>
 </div>
@@ -607,6 +681,7 @@ tr:hover{background:#f5f9f5}
   <div class="bn-item" data-btab="weather" onclick="switchTab('weather')"><span class="ic">🌤️</span>天气</div>
   <div class="bn-item" data-btab="fert" onclick="switchTab('fert')"><span class="ic">🧪</span>施肥</div>
   <div class="bn-item" data-btab="prod" onclick="switchTab('prod')"><span class="ic">🛒</span>产品</div>
+  <div class="bn-item" data-btab="ai" onclick="switchTab('ai')"><span class="ic">🤖</span>AI咨询</div>
 </div>
 
 <script>
@@ -650,6 +725,7 @@ function switchTab(id){
   // 懒加载图表
   if(id==='dash'&&!window._priceChartInited){initPriceChart();window._priceChartInited=true;}
   if(id==='weather'&&!window._forecastChartInited){initForecastChart();window._forecastChartInited=true;}
+  if(id==='ai'){checkAiKey();}
 }
 
 function switchSubTab(id){
@@ -661,14 +737,47 @@ function switchSubTab(id){
 }
 
 // ===================== 天气数据抓取 =====================
-let weatherSource = 'ref';
+let weatherSource = 'ref'; // 'live' or 'ref'
 
 async function loadWeather(){
   const dot = document.getElementById('wxDot');
+  const src = document.getElementById('wxSrc');
   dot.className = 'dot';
   
-  // 尝试: Open-Meteo API（CORS友好，实时数据）
+  // 尝试1: 中国天气网实时接口（CORS可能不通，用JSONP或代理尝试）
   try{
+    // 尝试通过代理API获取
+    const cityCode = '101260701'; // 都匀
+    const urls = [
+      `https://www.weather.com.cn/data/sk/${cityCode}.html`,
+      `https://d1.weather.com.cn/sk_2d/${cityCode}.html`,
+    ];
+    
+    // 尝试 fetch（可能被CORS阻止）
+    let liveData = null;
+    for(const url of urls){
+      try{
+        const r = await fetch(url, {mode:'cors'});
+        if(r.ok){
+          const t = await r.text();
+          // 解析各种格式
+          if(t.includes('weatherinfo')){
+            const m = t.match(/var\s+\w+\s*=\s*({.*?})/);
+            if(m){ liveData = JSON.parse(m[1]); break; }
+          }
+        }
+      }catch(e){}
+    }
+    
+    if(liveData && liveData.temp){
+      renderWeather(liveData, 'live');
+      return;
+    }
+  }catch(e){}
+  
+  // 尝试2: 通过open-meteo等免费API（CORS友好）
+  try{
+    // 都匀坐标: 26.26°N, 107.51°E
     const r = await fetch('https://api.open-meteo.com/v1/forecast?latitude=26.26&longitude=107.51&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=Asia/Shanghai&forecast_days=7');
     if(r.ok){
       const d = await r.json();
@@ -719,7 +828,7 @@ function renderWeather(data, source){
     document.getElementById('liveStatus').textContent = '实时数据';
   }else{
     dot.className = 'dot ref';
-    src.textContent = '数据来源：参考数据（实时接口不可用）';
+    src.textContent = '数据来源：中国天气网参考数据（实时接口不可用）';
     document.getElementById('liveStatus').textContent = '参考数据';
   }
   
@@ -824,16 +933,17 @@ function doCalc(){
   const soilN = n * 0.15 * 0.6;
   const netN = Math.max(0, needN - soilN);
   
+  // 有机替代比例
   let ratio = 0.3;
   if(ph < 5.5) ratio = 0.5;
   else if(ph < 6.5) ratio = 0.35;
   
   const organicN = netN * ratio;
-  const chemicalN = netN * (1 - ratio) * 0.75;
+  const chemicalN = netN * (1 - ratio) * 0.75; // 微生物菌剂减25%
   
-  const orgFert = organicN / (2.05/100 * 0.25);
-  const urea = chemicalN / (46/100 * 0.35);
-  const microbial = 3;
+  const orgFert = organicN / (2.05/100 * 0.25); // 有机肥N 2.05%, 利用率25%
+  const urea = chemicalN / (46/100 * 0.35); // 尿素N 46%, 利用率35%
+  const microbial = 3; // 微生物菌剂 3kg/亩
   
   const resultDiv = document.getElementById('calcResult');
   const content = document.getElementById('calcResultContent');
@@ -863,11 +973,154 @@ async function refreshPrices(){
   btn.innerHTML = '<span class="ld"><span></span><span></span><span></span></span> 刷新中...';
   btn.disabled = true;
   
+  // 模拟刷新（测试版数据暂不支持实时抓取）
   await new Promise(r=>setTimeout(r,1500));
   
   btn.innerHTML = orig;
   btn.disabled = false;
   alert('测试版价格数据暂为参考价，实时抓取功能开发中...');
+}
+
+// ===================== AI 咨询（DeepSeek） =====================
+const DEEPSEEK_API = 'https://api.deepseek.com/chat/completions';
+let aiKey = localStorage.getItem('ds_key') || '';
+
+function showKeyBar(){
+  document.getElementById('aiKeyBar').style.display = 'flex';
+  if(aiKey) document.getElementById('aiKeyInput').value = aiKey;
+}
+function hideKeyBar(){
+  document.getElementById('aiKeyBar').style.display = 'none';
+}
+function saveKey(){
+  const v = document.getElementById('aiKeyInput').value.trim();
+  if(!v) return;
+  aiKey = v;
+  localStorage.setItem('ds_key', v);
+  hideKeyBar();
+  addBotMsg('✅ API Key 已保存！现在可以向我提问了。');
+}
+
+// 首次打开 AI 页面时检查 key
+function checkAiKey(){
+  if(!aiKey) showKeyBar();
+}
+
+function askSuggestion(el){
+  document.getElementById('aiInput').value = el.textContent;
+  sendMsg();
+}
+
+async function sendMsg(){
+  const input = document.getElementById('aiInput');
+  const msg = input.value.trim();
+  if(!msg) return;
+  
+  if(!aiKey){
+    showKeyBar();
+    addBotMsg('⚠️ 请先设置 DeepSeek API Key。点击上方橙色条输入，然后在 <a href="https://platform.deepseek.com/api_keys" target="_blank">DeepSeek 开放平台</a> 获取。');
+    return;
+  }
+  
+  // 隐藏欢迎消息
+  const welcome = document.getElementById('aiWelcome');
+  if(welcome) welcome.style.display = 'none';
+  
+  // 添加用户消息
+  addUserMsg(msg);
+  input.value = '';
+  
+  // 显示 typing
+  const typing = document.getElementById('aiTyping');
+  typing.style.display = 'block';
+  document.getElementById('aiSendBtn').disabled = true;
+  scrollMsgs();
+  
+  try{
+    const resp = await fetch(DEEPSEEK_API, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + aiKey},
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          {role: 'system', content: '你是黔南农科AI助手，由香满乐·黔南州供销社农资公司提供。你专注农业领域，擅长：施肥方案推荐、病虫害识别与防治、土壤改良、中药材种植技术、果树管理、有机肥与微生物菌剂使用、贵州山地农业特点。回答简洁实用，200字以内，使用中文。遇到不确定的问题，如实说明。'},
+          ...getHistory(),
+          {role: 'user', content: msg}
+        ],
+        temperature: 0.7,
+        max_tokens: 600
+      })
+    });
+    
+    typing.style.display = 'none';
+    
+    if(!resp.ok){
+      const err = await resp.text();
+      if(resp.status === 401){
+        addBotMsg('❌ API Key 无效或已过期，请重新设置。');
+        showKeyBar();
+      }else{
+        addBotMsg('❌ API 请求失败：' + (resp.status) + '，请稍后重试。');
+      }
+      document.getElementById('aiSendBtn').disabled = false;
+      return;
+    }
+    
+    const data = await resp.json();
+    const reply = data.choices[0].message.content;
+    addBotMsg(reply);
+  }catch(e){
+    typing.style.display = 'none';
+    addBotMsg('❌ 网络错误，请检查网络后重试。');
+  }
+  
+  document.getElementById('aiSendBtn').disabled = false;
+}
+
+function getHistory(){
+  const msgs = document.querySelectorAll('#aiMsgs .ai-msg');
+  const history = [];
+  msgs.forEach(m=>{
+    if(m.classList.contains('user')){
+      history.push({role: 'user', content: m.querySelector('.txt').textContent});
+    }else if(m.classList.contains('bot')){
+      const txt = m.querySelector('.txt');
+      if(txt) history.push({role: 'assistant', content: txt.textContent});
+    }
+  });
+  // 只保留最近6轮对话
+  return history.slice(-12);
+}
+
+function addUserMsg(text){
+  const msgs = document.getElementById('aiMsgs');
+  const div = document.createElement('div');
+  div.className = 'ai-msg user';
+  const now = new Date();
+  div.innerHTML = '<span class="txt">'+escapeHtml(text)+'</span><div class="time">'+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0')+'</div>';
+  msgs.insertBefore(div, document.getElementById('aiTyping'));
+  scrollMsgs();
+}
+
+function addBotMsg(text){
+  const msgs = document.getElementById('aiMsgs');
+  const div = document.createElement('div');
+  div.className = 'ai-msg bot';
+  const now = new Date();
+  div.innerHTML = '<span class="txt">'+text+'</span><div class="time">'+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0')+'</div>';
+  msgs.insertBefore(div, document.getElementById('aiTyping'));
+  scrollMsgs();
+}
+
+function scrollMsgs(){
+  const msgs = document.getElementById('aiMsgs');
+  setTimeout(()=>{ msgs.scrollTop = msgs.scrollHeight; }, 100);
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML.replace(/\n/g, '<br>');
 }
 
 // ===================== 初始化 =====================
@@ -876,13 +1129,16 @@ function init(){
   const dateStr = today.getFullYear()+'/'+(today.getMonth()+1)+'/'+today.getDate();
   document.getElementById('dashDate').textContent = dateStr;
   
+  // 加载天气
   loadWeather();
   
+  // 初始化价格图（如果在首页）
   setTimeout(()=>{
     initPriceChart();
     window._priceChartInited = true;
   }, 300);
   
+  // 导航点击
   document.querySelectorAll('.nav-tab').forEach(tab=>{
     tab.addEventListener('click',()=>switchTab(tab.dataset.tab));
   });
